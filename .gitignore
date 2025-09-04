@@ -1,0 +1,21 @@
+# Database
+users.db
+*.db
+*.sqlite3
+
+# API keys and sensitive data
+.env
+config.py
+secrets.py
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+Thumbs.db
