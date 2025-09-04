@@ -3,13 +3,14 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import sqlite3
 import requests
 import time
+import os
 
 # Bot Token
-BOT_TOKEN = "8304954508:AAHLxY3YfPHwF1dnBxv8noLUhmz9YxV5MxU"
+BOT_TOKEN = os.environ.get('BOT_TOKEN', "8304954508:AAHLxY3YfPHwF1dnBxv8noLUhmz9YxV5MxU")
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # API Configuration
-API_TOKEN = "7658050410:WJ8iTpuZ"
+API_TOKEN = os.environ.get('API_TOKEN', "7658050410:WJ8iTpuZ")
 PEOPLE_API_URL = "https://leakosintapi.com/"
 VEHICLE_API_URL = "https://vehicleinfo.zerovault.workers.dev/?VIN="
 
@@ -51,6 +52,10 @@ def get_credits(user_id):
     result = execute_db("SELECT credits FROM users WHERE user_id=?", (str(user_id),))
     return result[0] if result else 0
 
+def get_referrals_count(user_id):
+    result = execute_db("SELECT referrals FROM users WHERE user_id=?", (str(user_id),))
+    return result[0] if result else 0
+
 def use_credit(user_id):
     if str(user_id) in UNLIMITED_USERS:
         return True
@@ -66,6 +71,8 @@ def add_user(user_id):
 def add_referral(referrer_id):
     if referrer_id:
         execute_db("UPDATE users SET credits=credits+1, referrals=referrals+1 WHERE user_id=?", (str(referrer_id),))
+        return True
+    return False
 
 def is_user_joined(user_id, channel_id):
     try:
@@ -103,13 +110,24 @@ def start(message):
     # Add user if not exists
     add_user(user_id)
     
-    # Check for referral
+    # Check for referral - FIXED LOGIC
     if len(message.text.split()) > 1:
         referrer_id = message.text.split()[1]
         if referrer_id != user_id:
+            # Referrer को credit दें
             add_referral(referrer_id)
+            # New user को भी extra credit दें
             execute_db("UPDATE users SET credits=credits+1 WHERE user_id=?", (str(user_id),))
-            bot.send_message(user_id, "🎉 You joined using a referral link! +1 credit")
+            
+            # दोनों को congratulations message
+            bot.send_message(user_id, "🎉 You joined using a referral link! +1 credit added to your account!")
+            
+            # Referrer को message (error handling के साथ)
+            try:
+                referrals_count = get_referrals_count(referrer_id)
+                bot.send_message(referrer_id, f"🎉 Congratulations! You got +1 credit for referral! Total referrals: {referrals_count}")
+            except Exception as e:
+                print(f"Could not send message to referrer: {e}")
     
     # Show main menu
     show_main_menu(user_id)
@@ -152,7 +170,7 @@ def callback_handler(call):
     
     elif call.data == "referral":
         referral_link = f"https://t.me/rajputteam_bot?start={user_id}"
-        bot.send_message(user_id, f"🤝 Your referral link:\n`{referral_link}`", parse_mode="Markdown")
+        bot.send_message(user_id, f"🤝 Your referral link:\n`{referral_link}`\n\nShare this link with friends to get +1 credit when they join!", parse_mode="Markdown")
     
     elif call.data == "verify_join":
         not_joined = check_all_channels(call.from_user.id)
@@ -175,8 +193,11 @@ def show_animation(user_id, target):
         "✅ Almost done..."
     ]
     for step in steps:
-        bot.send_message(user_id, step)
-        time.sleep(0.5)
+        try:
+            bot.send_message(user_id, step)
+            time.sleep(0.5)
+        except:
+            pass
 
 # Process number with API
 def process_number(message):
@@ -322,9 +343,10 @@ def process_vehicle(message):
     show_main_menu(user_id)
 
 # Run bot
-print("🤖 Bot is running...")
-print("♾️ Unlimited users:", UNLIMITED_USERS)
-try:
-    bot.infinity_polling()
-except Exception as e:
-    print(f"Bot error: {e}")
+if __name__ == "__main__":
+    print("🤖 Bot is running...")
+    print("♾️ Unlimited users:", UNLIMITED_USERS)
+    try:
+        bot.infinity_polling()
+    except Exception as e:
+        print(f"Bot error: {e}")
