@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Phoneaayahai - Telegram OSINT Bot
 
 A powerful Telegram bot for phone number and vehicle information lookup.
@@ -16,3 +17,6 @@ A powerful Telegram bot for phone number and vehicle information lookup.
 
 ## Usage
 Start the bot and use the inline keyboard to access various features.
+=======
+# Phoneaayahai
+>>>>>>> 60ac5d2e1dc412dc0fc7f9d9c274611b8b176649
