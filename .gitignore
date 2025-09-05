@@ -1,21 +1,7 @@
-# Database
-users.db
+__pycache__/
+*.pyc
 *.db
-*.sqlite3
-
-# API keys and sensitive data
 .env
+*.log
 config.py
 secrets.py
-
-# Python cache
-__pycache__/
-*.py[cod]
-
-# Logs
-*.log
-logs/
-
-# OS generated files
-.DS_Store
-Thumbs.db
